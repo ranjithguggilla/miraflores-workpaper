@@ -39,7 +39,7 @@ export async function versionLines(version = CURRENT_VERSION): Promise<Line[]> {
 export type Adjustment = {
   eventId: number; lineKey: string; old: number | string | null; new: number | string | null; delta: number;
   reason: string; authority?: string; by: string; role: string; at: Date;
-  taxEffectFed: number; taxEffectCa: number; status: "proposed" | "approved"; approvedBy?: string; requiresPartner: boolean; batchId?: string | null;
+  taxEffectFed: number; taxEffectCa: number; category?: string; status: "proposed" | "approved"; approvedBy?: string; requiresPartner: boolean; batchId?: string | null;
 };
 
 export function adjustmentsFromEvents(evs: Event[]): Adjustment[] {
@@ -52,7 +52,7 @@ export function adjustmentsFromEvents(evs: Event[]): Adjustment[] {
     return {
       eventId: e.id, lineKey: e.targetRef.replace(/^line:/, ""), old: p.old, new: p.new, delta: Number(p.delta ?? 0),
       reason: p.reason, authority: p.authority, by: e.actorId, role: e.actorRole, at: e.at,
-      taxEffectFed: Number(p.taxEffectFed ?? 0), taxEffectCa: Number(p.taxEffectCa ?? 0),
+      taxEffectFed: Number(p.taxEffectFed ?? 0), category: p.category ? String(p.category) : rateCategoryForLine(String(e.targetRef).replace(/^line:/, "")), taxEffectCa: Number(p.taxEffectCa ?? 0),
       status: p.requiresPartner && !ap ? "proposed" : "approved", approvedBy: ap?.actorId, requiresPartner: !!p.requiresPartner, batchId: e.batchId,
     };
   });
@@ -96,15 +96,17 @@ export async function adjustedSummary(scenarioId: number | null = null) {
   const [v] = await db.select().from(s.returnVersions).where(eq(s.returnVersions.version, CURRENT_VERSION));
   const base = v.summary as any;
   const evs = scenarioId === null ? await allEvents(null) : [...(await allEvents(null)), ...(await allEvents(scenarioId))];
-  const adjs = adjustmentsFromEvents(evs).filter((a) => a.status === "approved" || scenarioId !== null);
-  const fed = adjs.reduce((a, x) => a + x.taxEffectFed, 0);
-  const ca = adjs.reduce((a, x) => a + x.taxEffectCa, 0);
-  // payment lines change the balance 1:1 without a tax effect
-  const payDelta = adjs.filter((a) => /^(F1040\.26|F1040\.25a|F540NR\.7[123])$/.test(a.lineKey)).reduce((a, x) => a + x.delta, 0);
-  const caPay = adjs.filter((a) => /^F540NR\.7/.test(a.lineKey)).reduce((a, x) => a + x.delta, 0);
-  const fedPay = payDelta - caPay;
+  // Every adjustment is returned (the inbox lists the proposed ones); only approved ones move the numbers. In a what-if, everything on the branch counts.
+  const all = adjustmentsFromEvents(evs);
+  const adjs = all.filter((a) => a.status === "approved" || scenarioId !== null);
+  const isPay = (a: Adjustment) => a.category === "payments_federal" || a.category === "payments_california";
+  const fed = adjs.filter((a) => !isPay(a)).reduce((a, x) => a + x.taxEffectFed, 0);
+  const ca = adjs.filter((a) => !isPay(a)).reduce((a, x) => a + x.taxEffectCa, 0);
+  // payment lines change payments and the balance 1:1, never the tax
+  const fedPay = adjs.filter((a) => a.category === "payments_federal").reduce((a, x) => a + x.delta, 0);
+  const caPay = adjs.filter((a) => a.category === "payments_california").reduce((a, x) => a + x.delta, 0);
   return {
-    base, adjustments: adjs,
+    base, adjustments: all,
     federal: { ...base.federal, total_tax: base.federal.total_tax + fed, payments: base.federal.payments + fedPay, balance_due: base.federal.balance_due + fed - fedPay },
     california: { ...base.california, total_tax: base.california.total_tax + ca, payments: base.california.payments + caPay, balance_due: base.california.balance_due + ca - caPay },
     deltas: { fed, ca, fedPay, caPay },

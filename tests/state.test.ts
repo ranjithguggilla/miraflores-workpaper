@@ -61,3 +61,15 @@ describe("rate categories", () => {
     expect(rateCategoryForLine("SchA.5b")).toBe("salt");
   });
 });
+
+describe("summary exposes proposed adjustments without applying them", () => {
+  it("adjustmentsFromEvents keeps proposed and approved side by side", () => {
+    const events = [
+      ev(1, "adjust", "line:F8949.B.N3", { old: 18480, new: -620, delta: -19100, taxEffectFed: -6647, taxEffectCa: -1180, requiresPartner: true, reason: "basis per D11" }),
+      ev(2, "adjust", "line:SchC.27a.1", { old: 6850, new: 6634, delta: -216, taxEffectFed: 77, taxEffectCa: 7, requiresPartner: false, reason: "Spotify is personal" }),
+    ];
+    const all = adjustmentsFromEvents(events);
+    expect(all.map((a) => a.status)).toEqual(["proposed", "approved"]);
+    expect(all.filter((a) => a.status === "approved").reduce((s, a) => s + a.taxEffectFed, 0)).toBe(77);
+  });
+});
