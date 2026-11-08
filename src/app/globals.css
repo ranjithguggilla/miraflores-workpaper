@@ -33,6 +33,7 @@
   --ent-person: #be185d;  --ent-person-soft: #fbe0ec;  /* people & roles: rose */
   --ent-client: #6d28d9;  --ent-client-soft: #ebe3fb;  /* client answers, messages: violet */
   --ent-engine: #475569;  --ent-engine-soft: #e6eaf0;  /* engine, parameters: slate */
+  --topbar-h: 56px;
   --shadow-1: 0 1px 2px rgba(20,20,30,.06), 0 0 0 1px rgba(20,20,30,.04);
   --shadow-2: 0 6px 24px rgba(20,20,30,.10), 0 0 0 1px rgba(20,20,30,.05);
 }
@@ -114,7 +115,7 @@ label.field { display: block; font-size: 11.5px; color: var(--fg-3); margin-bott
 
 /* tables */
 table.ledger { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12.5px; }
-table.ledger thead th { position: sticky; top: 56px; z-index: 2; background: var(--s2); text-align: left; font-weight: 500; color: var(--fg-3); font-size: 11.5px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+table.ledger thead th { position: sticky; top: var(--topbar-h, 56px); z-index: 2; background: var(--s2); text-align: left; font-weight: 500; color: var(--fg-3); font-size: 11.5px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
 table.ledger thead th:first-child { border-top-left-radius: var(--radius-s); }
 table.ledger thead th:last-child { border-top-right-radius: var(--radius-s); }
 table.ledger td { padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
