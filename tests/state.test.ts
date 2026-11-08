@@ -59,6 +59,7 @@ describe("rate categories", () => {
     expect(rateCategoryForLine("F1040.1a")).toBe("wages");
     expect(rateCategoryForLine("Sch1.17")).toBe("adjustment");
     expect(rateCategoryForLine("SchA.5b")).toBe("salt");
+    expect(rateCategoryForLine("SchC.44a")).toBe("count");
   });
 });
 

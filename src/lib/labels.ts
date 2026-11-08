@@ -1,5 +1,5 @@
 /** Human names for every internal code the UI used to leak. */
-export const RATE_CATEGORY_LABELS: Record<string, string> = { wages: "Wages", interest: "Interest", schc_profit: "Schedule C profit", stcg: "Short-term gain", ltcg: "Long-term gain", ordinary_income: "Ordinary income", adjustment: "Adjustment to income", salt: "State and local tax", itemized: "Itemized deduction", ca_source_income: "California-source income", payments_federal: "Federal payment (balance, not tax)", payments_california: "California payment (balance, not tax)" };
+export const RATE_CATEGORY_LABELS: Record<string, string> = { wages: "Wages", interest: "Interest", schc_profit: "Schedule C profit", stcg: "Short-term gain", ltcg: "Long-term gain", ordinary_income: "Ordinary income", adjustment: "Adjustment to income", salt: "State and local tax", itemized: "Itemized deduction", ca_source_income: "California-source income", payments_federal: "Federal payment (balance, not tax)", payments_california: "California payment (balance, not tax)", count: "Count (miles, shares) — no direct tax effect" };
 
 export const CHECK_LABELS: Record<string, string> = {
   DUP_PAGE: "Duplicate page", DUP_DOC: "Duplicate document", SAME_MONEY: "Same money on two documents", INCLUDES_OVERLAP: "Overlapping amounts",

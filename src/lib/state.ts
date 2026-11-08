@@ -85,6 +85,7 @@ export async function taxEffect(lineKey: string, delta: number): Promise<{ fed: 
   const r = await rates();
   const category = rateCategoryForLine(lineKey);
   // A payment is not income: one more dollar paid is one dollar less due. Reported in the same fed/ca slots so balance-due math stays uniform.
+  if (category === "count") return { fed: 0, ca: 0, category };
   if (category === "payments_federal") return { fed: -delta, ca: 0, category };
   if (category === "payments_california") return { fed: 0, ca: -delta, category };
   const rate = r[category] ?? r.ordinary_income;

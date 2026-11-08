@@ -62,6 +62,7 @@ export function rateCategoryForLine(key: string): string {
   if (form === "F1040" && /^1/.test(line)) return "wages";
   if (form === "SchB" && line.startsWith("1")) return "interest";
   if (form === "SchB") return "ordinary_income";
+  if (form === "SchC" && /^44/.test(line)) return "count";   // miles are a count, not dollars; SchC.9 carries the dollars
   if (form === "SchC" || form === "F4562-C") return "schc_profit";
   if (form === "F8949") return /^[ABCH]\./.test(line) ? "stcg" : "ltcg";
   if (form === "SchD") return /^(1|2|3|6|7)/.test(line) ? "stcg" : "ltcg";
