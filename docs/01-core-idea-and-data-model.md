@@ -42,6 +42,8 @@ The surface is built around **work, not forms**: an inbox of what needs me (open
 
 **Stack**: Next.js 16 (App Router, server components, server actions — no client-side state store), Postgres 16 + Drizzle, a packet import that validates before it writes, 25 independent check rules, a simulated page renderer with highlight overlay, React Flow for the trace graph. One Docker host behind Caddy.
 
+**Roles**: preparers, reviewers, partner and quality reviewer do the work; the firm administrator edits standards and assignments but never return values; the client only answers, approves and e-signs. Nobody approves or signs their own adjustments. All of this is enforced in server actions.
+
 **Limitations, stated plainly**: tax effects are linear (Δ × the engine's per-dollar rate by category); the engine cannot be rerun, so knock-ons (SE tax, QBI, SEP limit, California AMT) are flagged, not recomputed. The role switcher is a demo device, not authentication; permissions are still enforced server-side per role. Page positions are synthetic because the packet has no page images. Issues are the one derived table that is persisted, because assignment and threads need identity.
 
 **What I would build next**: season replay (scrub the event log and watch the balance move), knock-on recompute for Schedule C, real sign-in, file attachments.

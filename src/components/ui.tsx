@@ -74,7 +74,7 @@ export function PageHeader({ crumbs, title, meta, actions, stats }: { crumbs?: {
         <div><h1>{title}</h1>{meta && <p className="text-fg-3 text-sm mt-1">{meta}</p>}</div>
         {actions && <div className="flex gap-2 items-center shrink-0">{actions}</div>}
       </div>
-      {stats && <div className="grid gap-3 mt-5" style={{ gridTemplateColumns: `repeat(${Math.min(stats.length, 6)}, minmax(0,1fr))` }}>{stats.map((s, i) => <div key={i} className="tile"><div className="text-fg-3 text-xs">{s.label}</div><div className={`text-lg mt-0.5 font-medium ${s.tone ?? ""}`}>{s.value}</div></div>)}</div>}
+      {stats && <div className="grid gap-3 mt-5" aria-live="polite" style={{ gridTemplateColumns: `repeat(${Math.min(stats.length, 6)}, minmax(0,1fr))` }}>{stats.map((s, i) => <div key={i} className="tile"><div className="text-fg-3 text-xs">{s.label}</div><div className={`text-lg mt-0.5 font-medium ${s.tone ?? ""}`}>{s.value}</div></div>)}</div>}
     </header>
   );
 }

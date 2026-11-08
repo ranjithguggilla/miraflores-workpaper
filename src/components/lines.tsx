@@ -3,7 +3,7 @@ import { CheckCheck } from "lucide-react";
 import type { Line, Claim, Event } from "@/lib/state";
 import { Money, StatusBadge } from "./ui";
 import { bulkVerify } from "@/lib/actions";
-import { ActionForm } from "./client";
+import { ActionForm, PagedRows } from "./client";
 import { verificationLabel } from "@/lib/labels";
 
 export function LineTable({ lines, claims, verifications, priorLines, path, standards, selectable = true }: {
@@ -17,7 +17,7 @@ export function LineTable({ lines, claims, verifications, priorLines, path, stan
         <table className="ledger">
           <thead><tr>{selectable && <th className="w-8"></th>}<th>Line</th><th>Label</th><th className="r">2024</th><th className="r">Engine</th><th className="r">Current</th><th>Status</th><th className="r">Sources</th></tr></thead>
           <tbody>
-            {lines.map((l) => {
+            <PagedRows colSpan={selectable ? 9 : 8} rows={lines.map((l) => {
               const c = claims.get(l.key);
               const v = (verifications.get(`line:${l.key}`) ?? []).map((e) => String((e.payload as any).type));
               const py = priorLines?.[l.key];
@@ -33,7 +33,7 @@ export function LineTable({ lines, claims, verifications, priorLines, path, stan
                   <td className="r text-fg-3 text-xs whitespace-nowrap">{l.sources.length ? `${l.sources.length} source${l.sources.length > 1 ? "s" : ""}` : l.inputs.length ? `${l.inputs.length} input${l.inputs.length > 1 ? "s" : ""}` : "—"}</td>
                 </tr>
               );
-            })}
+            })} />
           </tbody>
         </table>
       </div>

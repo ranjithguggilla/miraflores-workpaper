@@ -19,7 +19,10 @@ export const STAFF_ROLES = ["preparer", "reviewer", "partner", "quality_reviewer
 export function can(actor: Actor, action: string): boolean {
   const r = actor.role;
   switch (action) {
-    case "verify": case "note": case "question": case "attach": case "adjust": case "time":
+    // Preparers, reviewers, partners and the quality reviewer do the work. The firm administrator manages standards, assignments and logs but does not touch return values.
+    case "verify": case "adjust": case "attach":
+      return r === "preparer" || r === "reviewer" || r === "partner" || r === "quality_reviewer";
+    case "note": case "question": case "time":
       return r !== "client";
     case "resolve": case "assign": case "whatif": case "reopen":
       return r !== "client";

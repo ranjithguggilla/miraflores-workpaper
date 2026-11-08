@@ -7,10 +7,17 @@ services:
     healthcheck: { test: ["CMD-SHELL", "pg_isready -U wp"], interval: 5s, retries: 10 }
     restart: unless-stopped
   app:
-    build: .
+    build: { context: ., target: runner }
     env_file: .env.prod
     depends_on: { db: { condition: service_healthy } }
     ports: ["127.0.0.1:3000:3000"]
     restart: unless-stopped
+  # One-off tasks (schema push, import, seed) run from the build stage, which has tsx and drizzle-kit. Not started by `up`.
+  tools:
+    build: { context: ., target: build }
+    env_file: .env.prod
+    depends_on: { db: { condition: service_healthy } }
+    profiles: ["tools"]
+    entrypoint: ["npx"]
 volumes:
   pgdata: {}

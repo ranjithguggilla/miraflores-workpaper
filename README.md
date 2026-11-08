@@ -1,6 +1,6 @@
 # Workpaper — Okafor-Lindqvist 2025
 
-A web-native tax workpaper built for the Miraflores case study. Not a spreadsheet: a **trace graph of claims** with an **append-only event log** underneath.
+A web-native tax workpaper built for the Miraflores case study. Node ≥ 22 (`.nvmrc`), Postgres 16. Packet `data/packet.json` SHA-256 `ee01f8508bd2fd9854754b82fd9c4a055bdc55e2778a132002a25381c412ad19`; the import must print `documents 74, pages 199, values 3012, lines 1877, checks 101`. Not a spreadsheet: a **trace graph of claims** with an **append-only event log** underneath.
 
 - `docs/01-core-idea-and-data-model.md` — the core idea and data model (one page)
 - `docs/02-errors-found.md` — the packet's errors and how the design surfaces them
@@ -64,6 +64,21 @@ Geist Sans and Geist Mono, self-hosted from the `geist` npm package (no Google o
 | `/firm` | Standards as editable data, people/roles, time vs budget, sensitive-data view log, engine parameters |
 | `/activity` | Since I last looked, full event log with undo, season timeline |
 | `/search` | Lines, documents, values, issues |
+
+## Roles (the switcher stands in for sign-in)
+
+| Person | Role | Can |
+|---|---|---|
+| Priya Raman, Marcus Bell | preparer | verify, adjust, note, question, resolve, assign, time; preparer sign-off on work they did not adjust. Marcus has no sensitive-data clearance and sees masked values only |
+| Daniel Ortiz | reviewer | everything a preparer can, plus reviewer sign-off (never on scopes they adjusted) |
+| Helen Strand | partner | everything above, plus approving over-threshold adjustments (not their own), partner sign-off, freeze, amend |
+| Sam Adeyemi | quality reviewer | preparer actions, reviewer sign-off, approving adjustments, reading the view log |
+| Jo Kimura | firm administrator | firm standards, assignments, notes, time, view log; does not change return values |
+| Erik Lindqvist | client | Client and Filing pages only; answers questions, approves and e-signs |
+
+Every write is checked server-side (`src/lib/actions.ts` → `can()`); the role cookie is unsigned, so this is a demo device, not authentication.
+
+`GET /api/health` reports database state, event count and the packet hash. `/why-trust-this` lists the invariants the code enforces and the live counts.
 
 ## Deploy
 

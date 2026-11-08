@@ -40,7 +40,7 @@ export const extractedValues = pgTable("extracted_values", {
   textAsRead: text("text_as_read"),
   position: jsonb("position").$type<{ x0: number; y0: number; x1: number; y1: number } | null>(),
   confidence: real("confidence").notNull(),
-}, (t) => [index("ev_doc").on(t.docId)]);
+}, (t) => [index("ev_doc").on(t.docId), index("ev_doc_page").on(t.docId, t.page)]);
 
 export const returnLines = pgTable("return_lines", {
   version: text("version").notNull(),         // v1 | v2 | v3
@@ -107,7 +107,7 @@ export const events = pgTable("events", {
   batchId: text("batch_id"),
   reversesEventId: integer("reverses_event_id"),
   scenarioId: integer("scenario_id"),        // null = the real workpaper; otherwise a what-if branch
-}, (t) => [index("events_target").on(t.targetRef), index("events_kind").on(t.kind)]);
+}, (t) => [index("events_target").on(t.targetRef), index("events_kind").on(t.kind), index("events_batch").on(t.batchId), index("events_scenario").on(t.scenarioId)]);
 
 /** Issues are the only derived table we persist (they have identity: assignment, threads). Open/closed state is still event-driven. */
 export const issues = pgTable("issues", {

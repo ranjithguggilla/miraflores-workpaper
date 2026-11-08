@@ -32,15 +32,36 @@ if (problems.length) {
   process.exit(1);
 }
 
+/** Postgres enforces append-only on the event log: no UPDATE or DELETE ever succeeds, from the app or from psql. TRUNCATE (used by --reset) is a separate privilege and stays available to the importer. */
+async function enforceAppendOnly() {
+  await db.execute(sql`create or replace function events_append_only() returns trigger language plpgsql as $$ begin raise exception 'events is append-only: % is not allowed', tg_op; end $$`);
+  await db.execute(sql`drop trigger if exists events_append_only on events`);
+  await db.execute(sql`create trigger events_append_only before update or delete on events for each row execute function events_append_only()`);
+}
+
 async function main() {
+  await enforceAppendOnly();
+  // One transaction: a failure anywhere leaves the previous contents exactly as they were.
+  try {
+    await db.transaction(async (tx) => { await load(tx); });
+  } catch (e) {
+    console.error("Import failed; the previous contents were kept.");
+    throw e;
+  }
+  process.exit(0);   // only after the transaction has committed
+}
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function load(d: Tx) {
   console.log(`Importing ${file} (${p.packet.name} ${p.packet.version})`);
 
   if (RESET) {
-    await db.execute(sql`truncate events, issues, scenarios, snapshots, standards, cursors restart identity`);
+    await d.execute(sql`truncate events, issues, scenarios, snapshots, standards, cursors restart identity`);
   }
-  await db.execute(sql`truncate documents, pages, extracted_values, return_lines, return_versions, staff, packet_sections cascade`);
+  await d.execute(sql`truncate documents, pages, extracted_values, return_lines, return_versions, staff, packet_sections cascade`);
 
-  await db.insert(s.documents).values(p.documents.map((d: any) => ({
+  await d.insert(s.documents).values(p.documents.map((d: any) => ({
     id: d.id, title: d.title, documentType: d.document_type, issuer: d.issuer ?? null, belongsTo: d.belongs_to,
     taxYear: d.tax_year ?? null, receivedAt: new Date(d.received_at), uploadedBy: d.uploaded_by ?? null, fileName: d.file_name ?? null,
     pageCount: d.page_count, markedCorrected: d.marked_corrected ?? null,
@@ -51,16 +72,16 @@ async function main() {
     docId: d.id, n: pg.page, printedContent: pg.printed_content,
     contentHash: createHash("sha1").update(pg.printed_content).digest("hex"),
   })));
-  for (let i = 0; i < pageRows.length; i += 500) await db.insert(s.pages).values(pageRows.slice(i, i + 500));
+  for (let i = 0; i < pageRows.length; i += 500) await d.insert(s.pages).values(pageRows.slice(i, i + 500));
 
   const evRows = p.extracted_values.map((e: any) => ({
     id: e.id, docId: e.document_id, page: e.page, field: e.field, label: e.label, value: e.value,
     valueType: e.value_type, textAsRead: e.text_as_read ?? null, position: e.position ?? null, confidence: e.confidence,
   }));
-  for (let i = 0; i < evRows.length; i += 500) await db.insert(s.extractedValues).values(evRows.slice(i, i + 500));
+  for (let i = 0; i < evRows.length; i += 500) await d.insert(s.extractedValues).values(evRows.slice(i, i + 500));
 
   for (const v of p.return_versions) {
-    await db.insert(s.returnVersions).values({
+    await d.insert(s.returnVersions).values({
       version: v.version, computedAt: new Date(v.computed_at), trigger: v.trigger,
       documentsUsed: v.documents_used, documentsSuperseded: v.documents_superseded, summary: v.summary,
       taxEffectRates: v.tax_effect_rates, carryoversOut: v.carryovers_out ?? null, assets: v.assets ?? null,
@@ -70,29 +91,29 @@ async function main() {
       version: v.version, key: l.key, jurisdiction: l.jurisdiction, form: l.form, line: l.line, label: l.label,
       value: l.value, rule: l.rule ?? null, inputs: l.inputs ?? [], sources: l.sources ?? [], note: l.note ?? null,
     }));
-    for (let i = 0; i < rows.length; i += 500) await db.insert(s.returnLines).values(rows.slice(i, i + 500));
+    for (let i = 0; i < rows.length; i += 500) await d.insert(s.returnLines).values(rows.slice(i, i + 500));
   }
 
-  await db.insert(s.staff).values([
+  await d.insert(s.staff).values([
     ...p.firm.staff.map((m: any) => ({ id: m.id, name: m.name, role: m.role, credential: m.credential ?? null, sensitiveClearance: !!m.sensitive_data_clearance, activeFrom: m.active_from ?? null, note: m.note ?? null })),
     ...p.firm.client_users.map((c: any) => ({ id: c.id, name: c.name, role: "client", credential: null, sensitiveClearance: true, activeFrom: null, note: "Client user: sees own data and approval/signature steps only." })),
   ]);
 
   for (const key of ["packet", "readme", "household", "client", "firm", "prior_years", "tax_agency_records", "timeline", "engine_reference", "what_if", "planning_reference_2026", "post_filing_rates", "fx_rates"]) {
-    await db.insert(s.packetSections).values({ key, data: p[key] });
+    await d.insert(s.packetSections).values({ key, data: p[key] });
   }
 
   // Firm standards start from the packet's starter_standards (editable by the administrator role later).
-  const existing = await db.select().from(s.standards);
-  if (!existing.length) await db.insert(s.standards).values({ id: "current", data: p.firm.starter_standards, updatedBy: "import" });
+  const existing = await d.select().from(s.standards);
+  if (!existing.length) await d.insert(s.standards).values({ id: "current", data: p.firm.starter_standards, updatedBy: "import" });
 
   // Independent checks → issues. Re-running keeps resolved issues resolved (matched on code+title).
   const candidates = runChecks(p);
-  const existingIssues = await db.select().from(s.issues);
+  const existingIssues = await d.select().from(s.issues);
   const have = new Set(existingIssues.map((i) => i.code + "|" + i.title));
   const fresh = candidates.filter((c) => !have.has(c.code + "|" + c.title));
   if (fresh.length) {
-    await db.insert(s.issues).values(fresh.map((c) => ({
+    await d.insert(s.issues).values(fresh.map((c) => ({
       kind: c.kind, code: c.code, severity: c.severity, blocksFiling: !!c.blocksFiling, area: c.area,
       title: c.title, detail: c.detail, refs: c.refs, createdBy: `system:${c.code}`,
       assignedTo: p.firm.assignment_at_start.preparer, due: p.firm.deadlines.find((d: any) => /hand-off/.test(d.what))?.date ?? null,
@@ -102,7 +123,6 @@ async function main() {
   const byCode: Record<string, number> = {};
   for (const c of candidates) byCode[c.code] = (byCode[c.code] ?? 0) + 1;
   console.table(byCode);
-  process.exit(0);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

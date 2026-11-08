@@ -62,3 +62,9 @@ export function ShowMore({ total, step = 20, children }: { total: number; step?:
   const [n, setN] = useState(step);
   return <>{children(n)}{n < total && <button className="btn ghost mt-2" onClick={() => setN(n + step)}>Show {Math.min(step, total - n)} more of {total - n}</button>}</>;
 }
+
+/** Table-body pagination for server-rendered rows: shows the first `step`, then a "show more" row. Rows are ReactNodes, so this works from server components. */
+export function PagedRows({ rows, step = 60, colSpan }: { rows: ReactNode[]; step?: number; colSpan: number }) {
+  const [n, setN] = useState(step);
+  return <>{rows.slice(0, n)}{n < rows.length && <tr><td colSpan={colSpan} className="text-center py-2"><button type="button" className="btn ghost sm" onClick={() => setN(n + step)}>Show {Math.min(step, rows.length - n)} more of {rows.length - n} lines</button></td></tr>}</>;
+}

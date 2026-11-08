@@ -51,7 +51,7 @@ export default async function LinePage({ params, searchParams }: { params: Promi
           { label: claim.origin === "engine" ? "Current (same as engine)" : `Current · ${humanize(claim.origin)}`, value: <Money v={claim.current} />, tone: claim.origin === "adjusted" ? "text-adj" : claim.origin === "proposed" ? "text-prop" : "" },
           { label: "2024 filed", value: <Money v={ctx.priorValue} /> },
           { label: "Jurisdiction · rule", value: <span className="text-sm">{ctx.line.jurisdiction} · <span className="mono">{ctx.line.rule}</span></span> },
-          { label: "Tax effect per $1", value: <span className="text-sm num">fed {rate.fed.toFixed(3)} · CA {rate.ca.toFixed(3)}</span> },
+          { label: "Tax effect per $1 · linear estimate", value: <span className="text-sm num">fed {rate.fed.toFixed(3)} · CA {rate.ca.toFixed(3)}</span> },
         ]}
       />
 

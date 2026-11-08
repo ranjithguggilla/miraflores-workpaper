@@ -4,7 +4,7 @@
  * Everything here goes through the same event log the UI writes to.
  */
 import "dotenv/config";
-import { eq, like, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db, schema as s } from "../src/db";
 import { claims, scopeHash, taxEffect } from "../src/lib/state";
 
@@ -32,6 +32,10 @@ async function adjust(by: string, role: string, key: string, newV: number, reaso
 }
 
 async function main() {
+  // The seed tells a story once. Re-running it would double the history; refuse unless explicitly forced.
+  const [{ existing }] = await db.select({ existing: sql<number>`count(*)::int` }).from(s.events);
+  if (existing > 0 && !process.argv.includes("--force")) { console.log(`Demo history already present (${existing} events). Re-run the import with --reset first, or pass --force to append anyway.`); process.exit(0); }
+
   const P = "st-01", R = "st-02", H = "st-03";
   // Priya starts: verifies W-2 lines against documents (bulk), logs time
   const b1 = "b-w2";

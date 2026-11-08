@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Inbox, Activity, Sparkles, FileSpreadsheet, FolderOpen, Users, History, GitCompare, FlaskConical, Send, ShieldAlert, ArrowRightLeft, Building2, IdCard, Briefcase, LineChart, Store, Home, Share2, Receipt, MapPin, Calculator, Lock } from "lucide-react";
+import { Inbox, Activity, Sparkles, ShieldCheck, FileSpreadsheet, FolderOpen, Users, History, GitCompare, FlaskConical, Send, ShieldAlert, ArrowRightLeft, Building2, IdCard, Briefcase, LineChart, Store, Home, Share2, Receipt, MapPin, Calculator, Lock } from "lucide-react";
 import { db, schema as s } from "@/db";
 import { getActor } from "@/lib/session";
 import { switchActor } from "@/lib/actions";
@@ -17,7 +17,7 @@ export const AREA_ICONS: Record<string, React.ReactNode> = {
 
 export async function Shell({ children, path }: { children: React.ReactNode; path: string }) {
   const actor = await getActor();
-  if (actor.role === "client" && !["/filing", "/client", "/about"].includes(path)) redirect("/filing");
+  if (actor.role === "client" && !["/filing", "/client", "/about", "/why-trust-this"].includes(path)) redirect("/filing");
   const staff = await db.select().from(s.staff);
   const [changes, issues] = await Promise.all([changesSince(actor.id), openIssues()]);
   const blockers = issues.filter((i) => i.blocksFiling).length;
@@ -46,6 +46,7 @@ export async function Shell({ children, path }: { children: React.ReactNode; pat
           <span className="text-fg-3 text-xs">Tax year 2025 · Married filing jointly · California → Texas</span>
         </div>
         <Link href="/about" className="btn ghost sm ml-2" title="About this workpaper"><Sparkles /> <span>About</span></Link>
+        <Link href="/why-trust-this" className="btn ghost sm" title="Why trust this"><ShieldCheck /> <span>Trust</span></Link>
         <div className="ml-auto flex items-center gap-2">
           <SearchBox />
           <ActionForm action={switchActor} toast="Role switched" className="flex items-center gap-2">

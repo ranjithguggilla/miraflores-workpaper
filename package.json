@@ -46,11 +46,7 @@
   },
   "author": "Ranjith Guggilla",
   "description": "A web-native tax workpaper: every number is a claim; the workpaper is the append-only audit trail beneath it.",
-  "allowScripts": {
-    "esbuild@0.18.20": true,
-    "esbuild@0.25.12": true,
-    "esbuild@0.28.2": true,
-    "unrs-resolver@1.12.2": true,
-    "fsevents@2.3.3": true
+  "engines": {
+    "node": ">=22"
   }
 }
