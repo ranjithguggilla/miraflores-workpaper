@@ -1,0 +1,16 @@
+# Production stack on one host. Secrets live in .env.prod (never committed). Caddy on the host terminates TLS and proxies to 127.0.0.1:3000.
+services:
+  db:
+    image: postgres:16
+    env_file: .env.prod
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U wp"], interval: 5s, retries: 10 }
+    restart: unless-stopped
+  app:
+    build: .
+    env_file: .env.prod
+    depends_on: { db: { condition: service_healthy } }
+    ports: ["127.0.0.1:3000:3000"]
+    restart: unless-stopped
+volumes:
+  pgdata: {}

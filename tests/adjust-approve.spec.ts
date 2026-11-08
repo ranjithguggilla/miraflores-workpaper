@@ -1,0 +1,20 @@
+import { test, expect } from "@playwright/test";
+import { actAs, submit } from "./helpers";
+test("an over-threshold adjustment waits for a partner, then moves the balance", async ({ page }) => {
+  await actAs(page, "Priya Raman");
+  await page.goto("/lines/Sch1.17");
+  await page.getByPlaceholder(/New value/).fill("0");
+  await page.getByPlaceholder(/Why/).fill("not eligible — spouse employer plan (qa-25)");
+  await page.getByPlaceholder(/Authority/).fill("IRC §162(l)(2)(B)");
+  await submit(page, page.getByRole("button", { name: "Record adjustment" }));
+  await expect(page.getByText("Awaiting partner").first()).toBeVisible();
+  await page.goto("/");
+  const before = await page.getByText("Federal balance due · current").locator("..").locator(".num").innerText();
+  await actAs(page, "Helen Strand");
+  await page.goto("/lines/Sch1.17");
+  await submit(page, page.getByRole("button", { name: "Approve" }).first());
+  await expect(page.getByText("Adjusted").first()).toBeVisible();
+  await page.goto("/");
+  const after = await page.getByText("Federal balance due · current").locator("..").locator(".num").innerText();
+  expect(after).not.toBe(before);
+});

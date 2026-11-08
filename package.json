@@ -1,0 +1,56 @@
+{
+  "name": "miraflores-workpaper",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "verify:packet": "tsx scripts/verify-packet.ts",
+    "verify:errors": "tsx scripts/verify-errors.ts",
+    "db:push": "drizzle-kit push",
+    "db:import": "tsx scripts/import.ts --reset",
+    "db:seed": "tsx scripts/demo-seed.ts"
+  },
+  "dependencies": {
+    "@dagrejs/dagre": "^3.1.3",
+    "@xyflow/react": "^12.12.0",
+    "clsx": "^2.1.1",
+    "dotenv": "^18.0.8",
+    "drizzle-orm": "^0.45.4",
+    "geist": "^1.8.2",
+    "lucide-react": "^1.61.0",
+    "motion": "^14.9.0",
+    "next": "16.4.2",
+    "postgres": "^3.4.9",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "sonner": "^2.0.8",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.11",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.2",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^3.2.7"
+  },
+  "author": "Ranjith Guggilla",
+  "description": "A web-native tax workpaper: every number is a claim; the workpaper is the append-only audit trail beneath it.",
+  "allowScripts": {
+    "esbuild@0.18.20": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true,
+    "unrs-resolver@1.12.2": true,
+    "fsevents@2.3.3": true
+  }
+}
