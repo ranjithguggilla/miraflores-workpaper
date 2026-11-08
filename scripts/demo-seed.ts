@@ -94,6 +94,27 @@ async function main() {
   await ev(H, "partner", "view_sensitive", "doc:D04", { field: "license_no" }, "2026-03-12T19:00:00Z");
 
   await db.insert(s.cursors).values({ actorId: R, lastSeenEventId: 12 }).onConflictDoNothing();
+
+  // --- The remaining known errors, corrected with authority so the demo opens on a corrected return.
+  //     Left deliberately open for the live walkthrough: Sch1.17 (SE health insurance) and F8949.B.N3 (awaiting partner).
+  const fixes: [string, number, string, string, string, [string, string]][] = [
+    ["SchC.1", 151300, "Books total income 151,300 (D14). The 1099-K 12,400 is inside the Atlas Outfitters NEC 41,200 per the D15 page 3 deposit detail; the engine counted it twice.", "Reg. §1.6041-1; reconciliation to books", "2026-03-14T11:00:00Z", ["GROSS_RECEIPTS_RECON", "163,700"]],
+    ["SchCA540NR.1.E", 129569, "107,100 (D08 box 16) + 22,469 (D73 paystub, California wages to the 07/15/2025 move). Halvorsen's box 16 kept California as the work state after the move.", "R&TC §17041; FTB Pub. 1031", "2026-03-14T12:00:00Z", ["WAGE_SOURCING", "D09"]],
+    ["SchA.5b", 6508, "13,420 − 6,912 seller credit for 01/01–07/07/2025 taxes on the D54 closing statement. Only the buyer's share is deductible.", "IRC §164(d); Pub. 530", "2026-03-14T13:00:00Z", ["CLOSING_PRORATION", "6,912"]],
+    ["SchA.8a", 19697, "D55 box 1 says it includes the payoff interest; D56 (2,150) is that payoff 1098, not additional interest. 21,847 − 2,150.", "IRC §163(h); Form 1098 instructions", "2026-03-14T14:00:00Z", ["INCLUDES_OVERLAP", "D55"]],
+    ["F8283.A1.vehicle", 2900, "1098-C (D66) box 4c gross proceeds 2,900; the vehicle was sold without material improvement, so the deduction is limited to proceeds.", "IRC §170(f)(12)(A)(ii); Pub. 4303", "2026-03-14T15:00:00Z", ["RECORD_BEATS_ESTIMATE", "2,900"]],
+    ["F1040.26", 12000, "IRS account transcript (D69): four code 670 payments of 3,000 = 12,000. The organizer carried 13,000 (Q4 recorded as 4,000).", "IRS account transcript reconciliation", "2026-03-14T16:00:00Z", ["PAYMENTS_VS_IRS", "12,000"]],
+    ["F540NR.72", 10500, "FTB account: 2025 payments 10,500. The 09/15 Web Pay of 3,500 was designated tax year 2024 and is held as a 2024 credit; client to request redesignation.", "FTB payment designation; Form 5805 instructions", "2026-03-14T17:00:00Z", ["PAYMENTS_VS_FTB", "10,500"]],
+  ];
+  const made: Awaited<ReturnType<typeof adjust>>[] = [];
+  for (const [key, value, reason, authority, at, [code, like]] of fixes) {
+    let issue: number | undefined;
+    try { issue = await issueId(code, like); } catch { issue = undefined; }
+    made.push(await adjust(P, "preparer", key, value, reason, authority, at, issue));
+  }
+  // Helen approves the ones over the firm threshold the next morning.
+  for (const a of made) if ((a.payload as any).requiresPartner) await ev(H, "partner", "sign_off", a.targetRef, { level: "partner", approvesAdjustment: a.id, note: "Reviewed source and authority." }, "2026-03-15T09:00:00Z");
+
   console.log("Seeded demo history.");
   process.exit(0);
 }
