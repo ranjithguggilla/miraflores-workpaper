@@ -258,9 +258,12 @@ export async function promoteScenario(fd: FormData) {
   const evs = liveEvents(await allEvents(id)).filter((e) => e.kind === "whatif_adjust");
   const batchId = `scn-${id}`;
   const actor = await getActor();
+  // Same threshold rule as adjustLine: it is firm data, not code, and partners are not exempt from a second pair of eyes.
+  const [std] = await db.select().from(s.standards);
+  const threshold = Number((std?.data as any)?.partner_threshold ?? 1000);
   for (const e of evs) {
     const p = e.payload as any;
-    const requiresPartner = Math.max(Math.abs(p.taxEffectFed), Math.abs(p.taxEffectCa)) > 1000 && actor.role !== "partner";
+    const requiresPartner = Math.max(Math.abs(p.taxEffectFed), Math.abs(p.taxEffectCa)) > threshold;
     await emit("adjust", e.targetRef, { ...p, requiresPartner, fromScenario: id }, { batchId });
   }
   await db.update(s.scenarios).set({ closed: true }).where(eq(s.scenarios.id, id));
