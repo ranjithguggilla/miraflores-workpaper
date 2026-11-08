@@ -100,7 +100,8 @@ export async function bulkVerify(fd: FormData) {
 }
 
 export async function undoEvent(fd: FormData) {
-  const actor_ = await getActor(); if (!can(actor_, "adjust")) throw new Error("Not permitted for your role");
+  const actor = await getActor();
+  if (!can(actor, "adjust")) throw new Error("Not permitted for your role");
   const id = Number(fd.get("eventId"));
   const [ev] = await db.select().from(s.events).where(eq(s.events.id, id));
   if (!ev) return;
@@ -115,8 +116,8 @@ export async function undoEvent(fd: FormData) {
 
 /* ---------- notes, questions, answers, attachments ---------- */
 export async function addNote(fd: FormData) {
-  const actor_ = await getActor(); if (!can(actor_, "note")) throw new Error("Not permitted for your role");
   const actor = await getActor();
+  if (!can(actor, "note")) throw new Error("Not permitted for your role");
   const target = String(fd.get("target"));
   const kind = String(fd.get("kind") ?? "note") as EventKind;
   const text = String(fd.get("text") ?? "").trim();
@@ -137,14 +138,16 @@ export async function addNote(fd: FormData) {
 }
 
 export async function attachEvidence(fd: FormData) {
-  const actor_ = await getActor(); if (!can(actor_, "attach")) throw new Error("Not permitted for your role");
+  const actor = await getActor();
+  if (!can(actor, "attach")) throw new Error("Not permitted for your role");
   const target = String(fd.get("target"));
   await emit("attach", target, { ref: String(fd.get("ref")), note: String(fd.get("note") ?? ""), fileName: String(fd.get("fileName") ?? "") });
   back(fd);
 }
 
 export async function linkRefs(fd: FormData) {
-  const actor_ = await getActor(); if (!can(actor_, "attach")) throw new Error("Not permitted for your role");
+  const actor = await getActor();
+  if (!can(actor, "attach")) throw new Error("Not permitted for your role");
   await emit("link", String(fd.get("from")), { to: String(fd.get("to")), relation: String(fd.get("relation")), note: String(fd.get("note") ?? "") });
   back(fd);
 }
@@ -171,7 +174,8 @@ export async function resolveIssue(fd: FormData) {
 }
 
 export async function assignIssue(fd: FormData) {
-  const actor_ = await getActor(); if (!can(actor_, "assign")) throw new Error("Not permitted for your role");
+  const actor = await getActor();
+  if (!can(actor, "assign")) throw new Error("Not permitted for your role");
   const id = Number(fd.get("id"));
   const to = String(fd.get("to") ?? "") || null;
   const due = String(fd.get("due") ?? "") || null;
@@ -181,7 +185,8 @@ export async function assignIssue(fd: FormData) {
 }
 
 export async function answerQuestion(fd: FormData) {
-  const actor_ = await getActor(); if (!can(actor_, "answer")) throw new Error("Not permitted for your role");
+  const actor = await getActor();
+  if (!can(actor, "answer")) throw new Error("Not permitted for your role");
   const id = Number(fd.get("id"));
   const text = String(fd.get("text") ?? "").trim();
   const [issue] = await db.select().from(s.issues).where(eq(s.issues.id, id));
@@ -210,14 +215,16 @@ export async function signOff(fd: FormData) {
 }
 
 export async function reopenSignOff(fd: FormData) {
-  const actor_ = await getActor(); if (!can(actor_, "reopen")) throw new Error("Not permitted for your role");
+  const actor = await getActor();
+  if (!can(actor, "reopen")) throw new Error("Not permitted for your role");
   await emit("reopen", String(fd.get("target")), { reason: String(fd.get("reason") ?? "") });
   back(fd);
 }
 
 /* ---------- time ---------- */
 export async function logTime(fd: FormData) {
-  const actor_ = await getActor(); if (!can(actor_, "time")) throw new Error("Not permitted for your role");
+  const actor = await getActor();
+  if (!can(actor, "time")) throw new Error("Not permitted for your role");
   await emit("time", `area:${fd.get("area")}`, { hours: Number(fd.get("hours")), note: String(fd.get("note") ?? "") });
   back(fd);
 }
@@ -235,8 +242,8 @@ export async function unmask(fd: FormData) {
 
 /* ---------- what-if scenarios ---------- */
 export async function createScenario(fd: FormData) {
-  const actor_ = await getActor(); if (!can(actor_, "whatif")) throw new Error("Not permitted for your role");
   const actor = await getActor();
+  if (!can(actor, "whatif")) throw new Error("Not permitted for your role");
   const [row] = await db.insert(s.scenarios).values({ name: String(fd.get("name") || "Scenario"), baseVersion: CURRENT_VERSION, createdBy: actor.id }).returning();
   await emit("whatif_create", `scenario:${row.id}`, { name: row.name }, { scenarioId: row.id });
   revalidatePath("/whatif");
@@ -244,7 +251,8 @@ export async function createScenario(fd: FormData) {
 }
 
 export async function closeScenario(fd: FormData) {
-  const actor_ = await getActor(); if (!can(actor_, "whatif")) throw new Error("Not permitted for your role");
+  const actor = await getActor();
+  if (!can(actor, "whatif")) throw new Error("Not permitted for your role");
   const id = Number(fd.get("id"));
   await db.update(s.scenarios).set({ closed: true }).where(eq(s.scenarios.id, id));
   await emit("whatif_close", `scenario:${id}`, {}, { scenarioId: id });
@@ -253,11 +261,11 @@ export async function closeScenario(fd: FormData) {
 
 /** Promote a scenario: replay its adjustments into the real workpaper as one batch. */
 export async function promoteScenario(fd: FormData) {
-  const actor_ = await getActor(); if (!can(actor_, "adjust")) throw new Error("Not permitted for your role");
+  const actor = await getActor();
+  if (!can(actor, "adjust")) throw new Error("Not permitted for your role");
   const id = Number(fd.get("id"));
   const evs = liveEvents(await allEvents(id)).filter((e) => e.kind === "whatif_adjust");
   const batchId = `scn-${id}`;
-  const actor = await getActor();
   // Same threshold rule as adjustLine: it is firm data, not code, and partners are not exempt from a second pair of eyes.
   const [std] = await db.select().from(s.standards);
   const threshold = Number((std?.data as any)?.partner_threshold ?? 1000);
@@ -288,7 +296,8 @@ export async function freezeReturn(fd: FormData) {
 }
 
 export async function recordEfile(fd: FormData) {
-  const actor_ = await getActor(); if (!can(actor_, "file_result")) throw new Error("Not permitted for your role");
+  const actor = await getActor();
+  if (!can(actor, "file_result")) throw new Error("Not permitted for your role");
   await emit("efile_result", "return", { jurisdiction: String(fd.get("jurisdiction")), status: String(fd.get("status")), submissionId: String(fd.get("submissionId") ?? ""), errors: String(fd.get("errors") ?? "") });
   back(fd);
 }
@@ -329,8 +338,8 @@ export async function markSeen() {
 
 /* ---------- carry-forward ---------- */
 export async function carryForward(fd: FormData) {
-  const actor_ = await getActor(); if (!can(actor_, "note")) throw new Error("Not permitted for your role");
   const actor = await getActor();
+  if (!can(actor, "note")) throw new Error("Not permitted for your role");
   const items = fd.getAll("item").map(String);
   await emit("note", "carryforward", { text: `Carried to 2026: ${items.join("; ")}`, items, by: actor.id });
   back(fd);
