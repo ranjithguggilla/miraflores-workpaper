@@ -187,3 +187,15 @@ form[data-pending] .submit > span { opacity: .6; }
   .grid-cols-\[1fr_380px\] { grid-template-columns: 1fr !important; }
   table.ledger thead th { top: 0; }
 }
+
+/* Print: hide chrome, show content full-width (the notice response is printed and filed) */
+@media print {
+  header.topbar, aside.rail, .rail-only, .btn, .badge.outline,
+  [data-no-print], .toaster, [data-sonner-toaster] { display: none !important; }
+  main { padding: 0 !important; max-width: 100% !important; }
+  body { font-size: 11px; }
+  .card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+  table.ledger thead th { position: static; }
+  a.link { color: inherit; text-decoration: none; }
+  a.link::after { content: " (" attr(href) ")"; font-size: 9px; color: #666; }
+}
