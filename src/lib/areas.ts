@@ -56,6 +56,9 @@ export function areaForLine(key: string): AreaId {
 export function rateCategoryForLine(key: string): string {
   const [form, ...rest] = key.split(".");
   const line = rest.join(".");
+  // Payments and credits against tax change the balance due dollar for dollar, not taxable income.
+  if (form === "F1040" && /^(25[a-d]?|26|27|28|29|31|32|33)$/.test(line)) return "payments_federal";
+  if (form === "F540NR" && /^(7[1-9]|8[0-9])$/.test(line)) return "payments_california";
   if (form === "F1040" && /^1/.test(line)) return "wages";
   if (form === "SchB" && line.startsWith("1")) return "interest";
   if (form === "SchB") return "ordinary_income";

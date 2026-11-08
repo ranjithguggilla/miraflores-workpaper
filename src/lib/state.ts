@@ -84,6 +84,9 @@ export async function rates(version = CURRENT_VERSION): Promise<Record<string, {
 export async function taxEffect(lineKey: string, delta: number): Promise<{ fed: number; ca: number; category: string }> {
   const r = await rates();
   const category = rateCategoryForLine(lineKey);
+  // A payment is not income: one more dollar paid is one dollar less due. Reported in the same fed/ca slots so balance-due math stays uniform.
+  if (category === "payments_federal") return { fed: -delta, ca: 0, category };
+  if (category === "payments_california") return { fed: 0, ca: -delta, category };
   const rate = r[category] ?? r.ordinary_income;
   return { fed: Math.round(delta * rate.federal_per_dollar), ca: Math.round(delta * rate.california_per_dollar), category };
 }

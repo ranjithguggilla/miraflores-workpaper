@@ -49,3 +49,15 @@ describe("undo is visible to every derived view", () => {
     expect(liveEvents(events.filter((e) => e.kind === "verify"))).toHaveLength(2);
   });
 });
+
+describe("rate categories", () => {
+  it("treats payment lines as balance, not income", async () => {
+    const { rateCategoryForLine } = await import("@/lib/areas");
+    expect(rateCategoryForLine("F1040.26")).toBe("payments_federal");
+    expect(rateCategoryForLine("F1040.25a")).toBe("payments_federal");
+    expect(rateCategoryForLine("F540NR.72")).toBe("payments_california");
+    expect(rateCategoryForLine("F1040.1a")).toBe("wages");
+    expect(rateCategoryForLine("Sch1.17")).toBe("adjustment");
+    expect(rateCategoryForLine("SchA.5b")).toBe("salt");
+  });
+});
